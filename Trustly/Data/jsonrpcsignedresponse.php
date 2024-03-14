@@ -79,7 +79,7 @@ class Trustly_Data_JSONRPCSignedResponse extends Trustly_Data_JSONRPCResponse {
 			 * The Trustly_Data will point response_result /result or /error
 			 * respectivly, we need to take care of the signed part here only.
 			 */
-		if($this->isError()) {
+		if($this->isError() && isset($this->response_result['error']) && is_array($this->response_result['error'])) {
 			$this->response_result = $this->response_result['error'];
 		}
 	}
@@ -95,21 +95,19 @@ class Trustly_Data_JSONRPCSignedResponse extends Trustly_Data_JSONRPCResponse {
 	 *		no name was given
 	 */
 	public function getData($name=NULL) {
-		$data = NULL;
-
-		if(isset($this->response_result['data'])) {
-			$data = $this->response_result['data'];
-		}else {
-			return NULL;
+		$data = $this->getResult('data');
+		if($name !== NULL) {
+			return $data;
 		}
-
-		if(isset($name)) {
+		if($data !== NULL) {
+			if(!is_array($data)) {
+				throw new Trustly_DataException('Data is not an array');
+			}
 			if(isset($data[$name])) {
 				return $data[$name];
 			}
-		} else {
-			return $data;
 		}
+		return NULL;
 	}
 
 
@@ -119,10 +117,14 @@ class Trustly_Data_JSONRPCSignedResponse extends Trustly_Data_JSONRPCResponse {
 	 * @return ?integer The error code (numerical)
 	 */
 	public function getErrorCode() {
-		if($this->isError() && isset($this->response_result['data']['code'])) {
-			return $this->response_result['data']['code'];
+		if(!$this->isError()) {
+			return NULL;
 		}
-		return NULL;
+		$code = $this->getData('code');
+		if(!is_int($code)) {
+			throw new Trustly_DataException('Code is not an integer');
+		}
+		return $code;
 	}
 
 
@@ -132,10 +134,14 @@ class Trustly_Data_JSONRPCSignedResponse extends Trustly_Data_JSONRPCResponse {
 	 * @return ?string The error message
 	 */
 	public function getErrorMessage() {
-		if($this->isError() && isset($this->response_result['data']['message'])) {
-			return $this->response_result['data']['message'];
+		if(!$this->isError()) {
+			return NULL;
 		}
-		return NULL;
+		$message = $this->getData('message');
+		if(!is_string($message)) {
+			throw new Trustly_DataException('Message is not a string');
+		}
+		return $message;
 	}
 }
 /* vim: set noet cindent sts=4 ts=4 sw=4: */

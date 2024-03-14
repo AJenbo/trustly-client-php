@@ -63,7 +63,7 @@ class Trustly_Data_JSONRPCNotificationRequest extends Trustly_Data {
 
 		$payload = json_decode($notification_body, TRUE);
 
-		if(is_null($payload)) {
+		if($payload === NULL) {
 			$error = '';
 			if(function_exists('json_last_error_msg')) {
 				$error = ': ' . json_last_error_msg();
@@ -71,7 +71,9 @@ class Trustly_Data_JSONRPCNotificationRequest extends Trustly_Data {
 			throw new Trustly_DataException('Failed to parse JSON' . $error);
 		}
 
-		$this->payload = $payload;
+		if (is_array($payload)) {
+			$this->payload = $payload;
+		}
 
 		if($this->getVersion() != '1.1') {
 			throw new Trustly_JSONRPCVersionException('JSON RPC Version '. $this->getVersion() .'is not supported');
@@ -89,16 +91,17 @@ class Trustly_Data_JSONRPCNotificationRequest extends Trustly_Data {
 	 *		depending on $name
 	 */
 	public function getParams($name=NULL) {
-		if(!isset($this->payload['params'])) {
-			return NULL;
+		$params = $this->get('params');
+		if($name !== NULL) {
+			return $params;
 		}
-		$params = $this->payload['params'];
-		if(isset($name)) {
+		if($params !== NULL) {
+			if(!is_array($params)) {
+				throw new Trustly_DataException('Params is not an array');
+			}
 			if(isset($params[$name])) {
 				return $params[$name];
 			}
-		} else {
-			return $params;
 		}
 		return NULL;
 	}
@@ -115,16 +118,17 @@ class Trustly_Data_JSONRPCNotificationRequest extends Trustly_Data {
 	 *		$name.
 	 */
 	public function getData($name=NULL) {
-		if(!isset($this->payload['params']['data'])) {
-			return NULL;
+		$data = $this->getParams('data');
+		if($name !== NULL) {
+			return $data;
 		}
-		$data = $this->payload['params']['data'];
-		if(isset($name)) {
+		if($data !== NULL) {
+			if(!is_array($data)) {
+				throw new Trustly_DataException('Data is not an array');
+			}
 			if(isset($data[$name])) {
 				return $data[$name];
 			}
-		} else {
-			return $data;
 		}
 		return NULL;
 	}
@@ -136,7 +140,14 @@ class Trustly_Data_JSONRPCNotificationRequest extends Trustly_Data {
 	 * @return ?string The UUID value
 	 */
 	public function getUUID() {
-		return $this->getParams('uuid');
+		$uuid = $this->getParams('uuid');
+		if($uuid !== null) {
+			if(!is_string($uuid)) {
+				throw new Trustly_DataException('UUID is not a string');
+			}
+			return $uuid;
+		}
+		return NULL;
 	}
 
 
@@ -146,7 +157,14 @@ class Trustly_Data_JSONRPCNotificationRequest extends Trustly_Data {
 	 * @return ?string The Method value.
 	 */
 	public function getMethod() {
-		return $this->get('method');
+		$method = $this->get('method');
+		if($method !== null) {
+			if(!is_string($method)) {
+				throw new Trustly_DataException('Method is not a string');
+			}
+			return $method;
+		}
+		return NULL;
 	}
 
 
@@ -156,7 +174,14 @@ class Trustly_Data_JSONRPCNotificationRequest extends Trustly_Data {
 	 * @return ?string The Signature value.
 	 */
 	public function getSignature() {
-		return $this->getParams('signature');
+		$signature = $this->getParams('signature');
+		if($signature !== null) {
+			if(!is_string($signature)) {
+				throw new Trustly_DataException('Signature is not a string');
+			}
+			return $signature;
+		}
+		return NULL;
 	}
 
 
@@ -166,7 +191,14 @@ class Trustly_Data_JSONRPCNotificationRequest extends Trustly_Data {
 	 * @return ?string The Version.
 	 */
 	public function getVersion() {
-		return $this->get('version');
+		$version = $this->get('version');
+		if($version !== null) {
+			if(!is_string($version)) {
+				throw new Trustly_DataException('Version is not a string');
+			}
+			return $version;
+		}
+		return NULL;
 	}
 }
 /* vim: set noet cindent sts=4 ts=4 sw=4: */

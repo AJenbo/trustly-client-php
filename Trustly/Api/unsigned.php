@@ -164,7 +164,10 @@ class Trustly_Api_Unsigned extends Trustly_Api {
 		$response = parent::call($request);
 
 		if($response->isSuccess()) {
-			$this->session_uuid = $response->getResult('sessionuuid');
+			$uuid = $response->getResult('sessionuuid');
+			if (is_string($uuid)) {
+				$this->session_uuid = $uuid;
+			}
 		}
 		if(!isset($this->session_uuid)) {
 			throw new Trustly_AuthentificationException();
@@ -235,9 +238,9 @@ class Trustly_Api_Unsigned extends Trustly_Api {
 	 * @return Trustly_Data_JSONRPCResponse Response from the API.
 	 */
 	public function call($request, $params=NULL) {
-		if(isset($params)) {
+		if($params !== NULL) {
 			foreach($params as $key => $value) {
-				$request->setParam($key, $value);
+				$request->setParam($key, $this->serializeData($value));
 			}
 		}
 

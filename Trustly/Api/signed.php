@@ -137,8 +137,15 @@ class Trustly_Api_Signed extends Trustly_Api {
 	 * @return string
 	 */
 	public function signMerchantRequest($request) {
-		if(!isset($this->merchant_privatekey)) {
-			throw new Trustly_SignatureException('No private key has been loaded for signing');
+		$privatekey = $this->merchant_privatekey;
+		if(version_compare(PHP_VERSION, '8.0.0', '<')) {
+			if(!is_resource($privatekey)) {
+				throw new Trustly_SignatureException('No private key has been loaded for signing');
+			}
+		} else {
+			if(!$privatekey instanceof OpenSSLAsymmetricKey) {
+				throw new Trustly_SignatureException('No private key has been loaded for signing');
+			}
 		}
 
 		$method = $request->getMethod();
@@ -156,7 +163,8 @@ class Trustly_Api_Signed extends Trustly_Api {
 		$raw_signature = '';
 
 		$this->clearOpenSSLError();
-		if(openssl_sign($serial_data, $raw_signature, $this->merchant_privatekey, OPENSSL_ALGO_SHA1) === TRUE) {
+
+		if(openssl_sign($serial_data, $raw_signature, $privatekey, OPENSSL_ALGO_SHA1) === TRUE) {
 			return base64_encode($raw_signature);
 		}
 
@@ -281,7 +289,7 @@ class Trustly_Api_Signed extends Trustly_Api {
 		/*
 		*/
         $bytes = openssl_random_pseudo_bytes(16);
-        if (!$bytes) {
+        if(!$bytes) {
             throw new Trustly_DataException('Failed to generate request UUID');
         }
         assert(strlen($bytes) === 16);
@@ -498,7 +506,7 @@ class Trustly_Api_Signed extends Trustly_Api {
 			if($unchangeablenationalidentificationnumber) {
 				$attributes['UnchangeableNationalIdentificationNumber'] = 1;
 			}
-			if ($accountid) {
+			if($accountid) {
 				$attributes['AccountID'] = $accountid;
       }
 			if($requestKYC) {
@@ -1055,7 +1063,7 @@ class Trustly_Api_Signed extends Trustly_Api {
 	 *		system during development. Intead you can get you notifications on
 	 *		https://test.trustly.com/notifications.html
 	 *
-	 * @param mixed $authorizeonly
+	 * @param bool|null $authorizeonly
 	 *
 	 * @param mixed $templatedata
 	 *

@@ -45,11 +45,11 @@ class Trustly_Data_Request extends Trustly_Data {
 	 *
 	 * @param ?string $method Method name for the call
 	 *
-	 * @param ?array<mixed> $payload Call payload
+	 * @param ?array<string, mixed> $payload Call payload
 	 */
 	public function __construct($method=NULL, $payload=NULL) {
 		$vpayload = $this->vacuum($payload);
-		if(isset($vpayload)) {
+		if(is_array($vpayload)) {
 			$this->payload = $vpayload;
 		}
 
@@ -63,8 +63,12 @@ class Trustly_Data_Request extends Trustly_Data {
 	 * @return ?string uuid
 	 */
 	public function getUUID() {
-		if(isset($this->payload['uuid'])) {
-			return $this->payload['uuid'];
+		$uuid = $this->get('uuid');
+		if($uuid !== NULL) {
+			if(!is_string($uuid)) {
+				throw new Trustly_DataException('UUID is not a string');
+			}
+			return $uuid;
 		}
 		return NULL;
 	}

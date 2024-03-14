@@ -158,8 +158,10 @@ abstract class Trustly_Api {
 				}
 			}
 			return $return;
-		} else {
+		} else if (is_scalar($data) || $data === NULL) {
 			return (string)$data;
+		} else {
+			throw new Trustly_DataException('Cannot serialize data');
 		}
 	}
 
@@ -192,10 +194,19 @@ abstract class Trustly_Api {
 		if(!isset($signature)) {
 			return FALSE;
 		}
+		if(version_compare(PHP_VERSION, '8.0.0', '<')) {
+			if(!is_resource($this->trustly_publickey)) {
+				return FALSE;
+			}
+		} else {
+			if(!$this->trustly_publickey instanceof OpenSSLAsymmetricKey) {
+				return FALSE;
+			}
+		}
 
 		$serial_data = $method . $uuid . $this->serializeData($data);
 		$raw_signature = base64_decode($signature);
-		if (version_compare(phpversion(), '5.2.0', '<')) {
+		if(version_compare(PHP_VERSION, '5.2.0', '<')) {
 			return (boolean)openssl_verify($serial_data, $raw_signature, $this->trustly_publickey);
 		} else {
 			return (boolean)openssl_verify($serial_data, $raw_signature, $this->trustly_publickey, OPENSSL_ALGO_SHA1);
@@ -375,6 +386,7 @@ abstract class Trustly_Api {
 				throw new Trustly_ConnectionException($error);
 			}
 		}
+		/** @var int */
 		$response_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
 		return array($body, $response_code);

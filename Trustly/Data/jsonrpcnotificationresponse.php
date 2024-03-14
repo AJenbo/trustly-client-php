@@ -49,14 +49,14 @@ class Trustly_Data_JSONRPCNotificationResponse extends Trustly_Data {
 		$uuid = $request->getUUID();
 		$method = $request->getMethod();
 
-		if(isset($uuid)) {
+		if($uuid !== NULL) {
 			$this->setResult('uuid', $uuid);
 		}
-		if(isset($method)) {
+		if($method !== NULL) {
 			$this->setResult('method', $method);
 		}
 
-		if(isset($success)) {
+		if($success !== NULL) {
 			$this->setSuccess($success);
 		}
 
@@ -75,7 +75,7 @@ class Trustly_Data_JSONRPCNotificationResponse extends Trustly_Data {
 	public function setSuccess($success=NULL) {
 		$status = 'OK';
 
-		if(isset($success) && $success !== TRUE) {
+		if($success !== NULL && $success !== TRUE) {
 			$status = 'FAILED';
 		}
 		$this->setData('status', $status);
@@ -108,6 +108,9 @@ class Trustly_Data_JSONRPCNotificationResponse extends Trustly_Data {
 		if(!isset($this->payload['result'])) {
 			$this->payload['result'] = array();
 		}
+		if(!is_array($this->payload['result'])) {
+			throw new Trustly_DataException('Result is not an array');
+		}
 		$this->payload['result'][$name] = $value;
 		return $value;
 	}
@@ -124,20 +127,19 @@ class Trustly_Data_JSONRPCNotificationResponse extends Trustly_Data {
 	 *		$name.
 	 */
 	public function getResult($name=NULL) {
-		$result = NULL;
-		if(isset($this->payload['result'])) {
-			$result = $this->payload['result'];
-		} else {
-			return NULL;
+		$result = $this->get('result');
+		if($name !== NULL) {
+			return $result;
 		}
-
-		if(isset($name)) {
+		if($result !== NULL) {
+			if(!is_array($result)) {
+				throw new Trustly_DataException('Result is not an array');
+			}
 			if(isset($result[$name])) {
 				return $result[$name];
 			}
-		} else {
-			return $result;
 		}
+		return NULL;
 	}
 
 
@@ -152,20 +154,19 @@ class Trustly_Data_JSONRPCNotificationResponse extends Trustly_Data {
 	 *		$name.
 	 */
 	public function getData($name=NULL) {
-		$data = NULL;
-		if(isset($this->payload['result']['data'])) {
-			$data = $this->payload['result']['data'];
-		}else {
-			return NULL;
+		$data = $this->getResult('data');
+		if($name !== NULL) {
+			return $data;
 		}
-
-		if(isset($name)) {
+		if($data !== NULL) {
+			if(!is_array($data)) {
+				throw new Trustly_DataException('Data is not an array');
+			}
 			if(isset($data[$name])) {
 				return $data[$name];
 			}
-		} else {
-			return $data;
 		}
+		return NULL;
 	}
 
 
@@ -183,6 +184,9 @@ class Trustly_Data_JSONRPCNotificationResponse extends Trustly_Data {
 		if(!isset($this->payload['result'])) {
 			$this->payload['result'] = array();
 		}
+		if(!is_array($this->payload['result'])) {
+			throw new Trustly_DataException('Result is not an array');
+		}
 		if(!isset($this->payload['result']['data'])) {
 			$this->payload['result']['data'] = array($name => $value);
 		} else {
@@ -198,7 +202,14 @@ class Trustly_Data_JSONRPCNotificationResponse extends Trustly_Data {
 	 * @return ?string The Method value.
 	 */
 	public function getMethod() {
-		return $this->getResult('method');
+		$method = $this->getResult('method');
+		if($method !== NULL) {
+			if(!is_string($method)) {
+				throw new Trustly_DataException('Method is not a string');
+			}
+			return $method;
+		}
+		return NULL;
 	}
 
 
@@ -208,7 +219,14 @@ class Trustly_Data_JSONRPCNotificationResponse extends Trustly_Data {
 	 * @return ?string The UUID value
 	 */
 	public function getUUID() {
-		return $this->getResult('uuid');
+		$uuid = $this->getResult('uuid');
+		if($uuid !== NULL) {
+			if(!is_string($uuid)) {
+				throw new Trustly_DataException('UUID is not a string');
+			}
+			return $uuid;
+		}
+		return NULL;
 	}
 }
 /* vim: set noet cindent sts=4 ts=4 sw=4: */

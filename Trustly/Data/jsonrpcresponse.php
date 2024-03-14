@@ -44,7 +44,10 @@ class Trustly_Data_JSONRPCResponse extends Trustly_Data_Response {
 	public function __construct($response_body) {
 		parent::__construct($response_body);
 
-		$version = (string)$this->get('version');
+		$version = $this->get('version');
+		if(!is_string($version)) {
+			throw new Trustly_DataException('Version is not a string');
+		}
 		if($version !== '1.1') {
 			throw new Trustly_JSONRPCVersionException("JSON RPC Version $version is not supported. " . json_encode($this->payload));
 		}
@@ -81,11 +84,18 @@ class Trustly_Data_JSONRPCResponse extends Trustly_Data_Response {
 	 * @return ?integer The error code (numerical)
 	 */
 	public function getErrorCode() {
-		if($this->isError() && isset($this->response_result['code'])) {
-			return $this->response_result['code'];
+		if($this->isError()) {
+			$code = $this->getResult('code');
+			if($code !== NULL) {
+				if(!is_int($code)) {
+					throw new Trustly_DataException('Code is not an integer');
+				}
+				return $code;
+			}
 		}
 		return NULL;
 	}
+
 
 	/**
 	 * Get error message (if any) from the API response
@@ -93,8 +103,14 @@ class Trustly_Data_JSONRPCResponse extends Trustly_Data_Response {
 	 * @return ?string The error message
 	 */
 	public function getErrorMessage() {
-		if($this->isError() && isset($this->response_result['message'])) {
-			return $this->response_result['message'];
+		if($this->isError()) {
+			$message = $this->getResult('message');
+			if($message !== NULL) {
+				if(!is_string($message)) {
+					throw new Trustly_DataException('Message is not a string');
+				}
+				return $message;
+			}
 		}
 		return NULL;
 	}

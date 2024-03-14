@@ -43,36 +43,28 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 *
 	 * @param ?string $method Outgoing call API method
 	 *
-	 * @param mixed $data Outputgoing call Data (if any). This can be either an
+	 * @param ?array<string, mixed> $data Outputgoing call Data (if any). This can be either an
 	 *		array or a simple non-complex value.
 	 *
-	 * @param mixed $attributes Outgoing call attributes if any. If attributes
+	 * @param ?array<string, mixed> $attributes Outgoing call attributes if any. If attributes
 	 *		is set then $data needs to be an array.
 	 */
 	public function __construct($method=NULL, $data=NULL, $attributes=NULL) {
 		$payload = NULL;
 
-		if(isset($data) || isset($attributes)) {
-			$payload = array('params' => array());
-
-			if(isset($data)) {
-				if(!is_array($data) && isset($attributes)) {
-					throw new Trustly_DataException('Data must be array if attributes is provided');
-				}
-				$payload['params']['Data'] = $data;
+		if($data !== NULL || $attributes !== NULL) {
+			if($data === NULL) {
+				$data = array();
 			}
-
-			if(isset($attributes)) {
-				if(!isset($payload['params']['Data'])) {
-					$payload['params']['Data'] = array();
-				}
-				$payload['params']['Data']['Attributes'] = $attributes;
+			if($attributes !== NULL) {
+				$data['Attributes'] = $attributes;
 			}
+			$payload = array('params' => array('Data' => $data));
 		}
 
 		parent::__construct($method, $payload);
 
-		if(isset($method)) {
+		if($method !== NULL) {
 			$this->payload['method'] = $method;
 		}
 
@@ -90,11 +82,14 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 *
 	 * @param string $name Name of parameter
 	 *
-	 * @param mixed $value Value of parameter
+	 * @param ?string $value Value of parameter
 	 *
-	 * @return mixed $value
+	 * @return ?string $value
 	 */
 	public function setParam($name, $value) {
+		if(!is_array($this->payload['params'])) {
+			throw new Trustly_DataException('Params is not an array');
+		}
 		$this->payload['params'][$name] = Trustly_Data::ensureUTF8($value);
 		return $value;
 	}
@@ -108,8 +103,12 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 * @return mixed The value
 	 */
 	public function getParam($name) {
-		if(isset($this->payload['params'][$name])) {
-			return $this->payload['params'][$name];
+		$params = $this->get('params');
+		if($params !== NULL) {
+			if(!is_array($params)) {
+				throw new Trustly_DataException('Params is not an array');
+			}
+			return $params[$name];
 		}
 		return NULL;
 	}
@@ -124,6 +123,9 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 * @return mixed The value
 	 */
 	public function popParam($name) {
+		if(!is_array($this->payload['params'])) {
+			throw new Trustly_DataException('Params is not an array');
+		}
 		$v = NULL;
 		if(isset($this->payload['params'][$name])) {
 			$v = $this->payload['params'][$name];
@@ -141,6 +143,9 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 * @return string $uuid
 	 */
 	public function setUUID($uuid) {
+		if(!is_array($this->payload['params'])) {
+			throw new Trustly_DataException('Params is not an array');
+		}
 		$this->payload['params']['UUID'] = Trustly_Data::ensureUTF8($uuid);
 		return $uuid;
 	}
@@ -152,8 +157,12 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 * @return ?string The UUID value
 	 */
 	public function getUUID() {
-		if(isset($this->payload['params']['UUID'])) {
-			return $this->payload['params']['UUID'];
+		$uuid = $this->getParam('UUID');
+		if($uuid !== NULL) {
+			if(!is_string($uuid)) {
+				throw new Trustly_DataException('UUID is not a string');
+			}
+			return $uuid;
 		}
 		return NULL;
 	}
@@ -176,7 +185,14 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 * @return ?string The Method value.
 	 */
 	public function getMethod() {
-		return $this->get('method');
+		$method = $this->get('method');
+		if($method !== NULL) {
+			if(!is_string($method)) {
+				throw new Trustly_DataException('Method is not a string');
+			}
+			return $method;
+		}
+		return NULL;
 	}
 
 
@@ -185,11 +201,14 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 *
 	 * @param string $name The name of the Data parameter to set
 	 *
-	 * @param mixed $value The value of the Data parameter to set
+	 * @param ?string $value The value of the Data parameter to set
 	 *
-	 * @return mixed $value
+	 * @return ?string $value
 	 */
 	public function setData($name, $value) {
+		if(!is_array($this->payload['params'])) {
+			throw new Trustly_DataException('Data is not an array');
+		}
 		if(!isset($this->payload['params']['Data'])) {
 			$this->payload['params']['Data'] = array();
 		}
@@ -208,13 +227,16 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 * @return mixed The value or the entire Data depending on $name
 	 */
 	public function getData($name=NULL) {
-		if(isset($name)) {
-			if(isset($this->payload['params']['Data'][$name])) {
-				return $this->payload['params']['Data'][$name];
+		$data = $this->getParam('Data');
+		if($name !== NULL) {
+			return $data;
+		}
+		if($data !== NULL) {
+			if(!is_array($data)) {
+				throw new Trustly_DataException('Data is not an array');
 			}
-		} else {
-			if(isset($this->payload['params']['Data'])) {
-				return $this->payload['params']['Data'];
+			if(isset($data[$name])) {
+				return $data[$name];
 			}
 		}
 		return NULL;
@@ -226,19 +248,33 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 *
 	 * @param string $name The name of the Attributes parameter to set
 	 *
-	 * @param mixed $value The value of the Attributes parameter to set
+	 * @param ?string $value The value of the Attributes parameter to set
 	 *
-	 * @return mixed $value
+	 * @return ?string $value
 	 */
 	public function setAttribute($name, $value) {
+		if(!isset($this->payload['params'])) {
+			$this->payload['params'] = array();
+		}
+		if(!is_array($this->payload['params'])) {
+			throw new Trustly_DataException('Params is not an array');
+		}
 		if(!isset($this->payload['params']['Data'])) {
 			$this->payload['params']['Data'] = array();
 		}
-
-		if(!isset($this->payload['params']['Data']['Attributes'])) {
-			$this->payload['params']['Data']['Attributes'] = array();
+		if(!is_array($this->payload['params'])) {
+			throw new Trustly_DataException('Params is not an array');
 		}
-		$this->payload['params']['Data']['Attributes'][$name] = Trustly_Data::ensureUTF8($value);
+		if(!is_array($this->payload['params']['Data'])) {
+			throw new Trustly_DataException('Data is not an array');
+		}
+
+		$value = Trustly_Data::ensureUTF8($value);
+		if(!isset($this->payload['params']['Data']['Attributes'])) {
+			$this->payload['params']['Data']['Attributes'] = array($name => $value);
+		} else {
+			$this->payload['params']['Data']['Attributes'][$name] = $value;
+		}
 		return $value;
 	}
 
@@ -253,10 +289,11 @@ class Trustly_Data_JSONRPCRequest extends Trustly_Data_Request {
 	 * @return mixed The value or the entire Attributes depending on $name
 	 */
 	public function getAttribute($name) {
-		if(isset($this->payload['params']['Data']['Attributes'][$name])) {
-			return $this->payload['params']['Data']['Attributes'][$name];
+		$attributes = $this->getData('Attributes');
+		if(!is_array($attributes) || !isset($attributes[$name])) {
+			return NULL;
 		}
-		return NULL;
+		return $attributes[$name];
 	}
 }
 /* vim: set noet cindent sts=4 ts=4 sw=4: */

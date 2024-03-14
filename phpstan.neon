@@ -1,4 +1,11 @@
 parameters:
-    level: 8
+    level: max
     paths:
         - ./Trustly/
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        - '/^Class OpenSSLAsymmetricKey not found\.$/'
+        - '/^Parameter #3 \$private_key of function openssl_sign expects array\|OpenSSLAsymmetricKey\|OpenSSLCertificate\|string, OpenSSLAsymmetricKey\|resource given\.$/'
+        - '/^Parameter #3 \$priv_key_id of function openssl_sign expects resource\|string, OpenSSLAsymmetricKey\|resource given\.$/'
+        - '/^Parameter #3 \$pub_key_id of function openssl_verify expects resource\|string, OpenSSLAsymmetricKey\|resource given\.$/'
+        - '/^Parameter #3 \$public_key of function openssl_verify expects array\|OpenSSLAsymmetricKey\|OpenSSLCertificate\|string, OpenSSLAsymmetricKey\|resource given\.$/'

@@ -49,9 +49,9 @@ class Trustly_Data_Response extends Trustly_Data {
 
 	/**
 	 * Shortcut to the part of the result being actually interesting. The guts will contain all returned data.
-	 * @var mixed
+	 * @var array<string, mixed>
 	 */
-	public $response_result = NULL;
+	public $response_result = array();
 
 
 	/**
@@ -71,7 +71,7 @@ class Trustly_Data_Response extends Trustly_Data {
 		$this->response_body = $response_body;
 
 		$payload = json_decode($response_body, TRUE);
-		if($payload === FALSE) {
+		if(!$payload) {
 			/* Only throw the connection error exception here if we did not
 			 * receive a valid JSON response, if we did recive one we will use
 			 * the error information in that response instead. */
@@ -82,7 +82,7 @@ class Trustly_Data_Response extends Trustly_Data {
 			}
 		}
 
-		if(isset($payload)) {
+		if(is_array($payload)) {
 			$this->payload = $payload;
 		}
 
@@ -90,12 +90,12 @@ class Trustly_Data_Response extends Trustly_Data {
 		 * have a 'result' on toplevel in the payload, while an failure will
 		 * have a 'error' on the tyoplevel
 		 */
-		$this->response_result = &$this->payload['result'];
-		if($this->response_result === NULL) {
+		if(isset($this->payload['result']) && is_array($this->payload['result'])) {
+			$this->response_result = &$this->payload['result'];
+		} else if(isset($this->payload['error']) && is_array($this->payload['error'])) {
 			$this->response_result = &$this->payload['error'];
-			if($this->response_result === NULL) {
-				throw new Trustly_DataException('No result or error in response');
-			}
+		}else {
+			throw new Trustly_DataException('No result or error in response');
 		}
 	}
 
@@ -137,8 +137,12 @@ class Trustly_Data_Response extends Trustly_Data {
 	 */
 	public function getErrorMessage() {
 		if($this->isError()) {
-			if(isset($this->response_result['message'])) {
-				return $this->response_result['message'];
+			$message = $this->getResult('message');
+			if($message !== NULL) {
+				if(!is_string($message)) {
+					throw new Trustly_DataException('Message is not a string');
+				}
+				return $message;
 			}
 		}
 		return NULL;
@@ -152,8 +156,12 @@ class Trustly_Data_Response extends Trustly_Data {
 	 */
 	public function getErrorCode() {
 		if($this->isError()) {
-			if(isset($this->response_result['code'])) {
-				return $this->response_result['code'];
+			$code = $this->getResult('code');
+			if($code !== NULL) {
+				if(!is_int($code)) {
+					throw new Trustly_DataException('Code is not an integer');
+				}
+				return $code;
 			}
 		}
 		return NULL;
@@ -171,14 +179,11 @@ class Trustly_Data_Response extends Trustly_Data {
 	 */
 	public function getResult($name=NULL) {
 		if($name === NULL) {
-				# An array is always copied
 			return $this->response_result;
 		}
-
 		if(is_array($this->response_result) && isset($this->response_result[$name])) {
 			return $this->response_result[$name];
 		}
-
 		return NULL;
 	}
 
@@ -189,8 +194,12 @@ class Trustly_Data_Response extends Trustly_Data {
 	 * @return ?string uuid
 	 */
 	public function getUUID() {
-		if(isset($this->response_result['uuid'])) {
-			return $this->response_result['uuid'];
+		$uuid = $this->getResult('uuid');
+		if($uuid !== NULL) {
+			if(!is_string($uuid)) {
+				throw new Trustly_DataException('UUID is not a string');
+			}
+			return $uuid;
 		}
 		return NULL;
 	}
@@ -202,8 +211,12 @@ class Trustly_Data_Response extends Trustly_Data {
 	 * @return ?string method name
 	 */
 	public function getMethod() {
-		if(isset($this->response_result['method'])) {
-			return $this->response_result['method'];
+		$method = $this->getResult('method');
+		if($method !== NULL) {
+			if(!is_string($method)) {
+				throw new Trustly_DataException('Method is not a string');
+			}
+			return $method;
 		}
 		return NULL;
 	}
@@ -215,8 +228,12 @@ class Trustly_Data_Response extends Trustly_Data {
 	 * @return ?string signature
 	 */
 	public function getSignature() {
-		if(isset($this->response_result['signature'])) {
-			return $this->response_result['signature'];
+		$signature = $this->getResult('signature');
+		if($signature !== null) {
+			if(!is_string($signature)) {
+				throw new Trustly_DataException('Signature is not a string');
+			}
+			return $signature;
 		}
 		return NULL;
 	}

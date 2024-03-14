@@ -37,7 +37,7 @@
 class Trustly_Data {
 	/**
 	 * Data payload
-	 * @var array<mixed>
+	 * @var array<string, mixed>
 	 */
 	protected $payload = array();
 
@@ -51,23 +51,17 @@ class Trustly_Data {
 	 * @return mixed cleaned data
 	 */
 	public function vacuum($data) {
-		if(is_null($data)) {
-			return NULL;
-		} elseif(is_array($data)) {
-			$ret = array();
-			foreach($data as $k => $v) {
-				$nv = $this->vacuum($v);
-				if(isset($nv)) {
-					$ret[$k] = $nv;
-				}
-			}
-			if(count($ret)) {
-				return $ret;
-			}
-			return NULL;
-		} else {
+		if(!is_array($data)) {
 			return $data;
 		}
+		foreach($data as $k => $v) {
+			$data[$k] = $this->vacuum($v);
+		}
+		$data = array_filter($data);
+		if(!$data) {
+			return NULL;
+		}
+		return $data;
 	}
 
 
@@ -81,12 +75,11 @@ class Trustly_Data {
 	 * @return mixed value
 	 */
 	public function get($name=NULL) {
-		if($name === NULL) {
+		if($name !== NULL) {
 			return $this->payload;
-		} else {
-			if(isset($this->payload[$name])) {
-				return $this->payload[$name];
-			}
+		}
+		if(isset($this->payload[$name])) {
+			return $this->payload[$name];
 		}
 		return NULL;
 	}
@@ -96,7 +89,7 @@ class Trustly_Data {
 	 * Function to ensure that the given value is in UTF8. Used to make sure
 	 * all outgoing data is properly encoded in the call
 	 *
-	 * @param string $str String to process
+	 * @param ?string $str String to process
 	 *
 	 * @return ?string UTF-8 variant of string
 	 */
@@ -119,7 +112,7 @@ class Trustly_Data {
 	 *
 	 * @param string $name
 	 *
-	 * @param mixed $value
+	 * @param ?string $value
 	 *
 	 * @return void
 	 */
